@@ -1,5 +1,10 @@
 Transform: AWS::Serverless-2016-10-31
 
+Parameters:
+  RetentionInDays:
+    Type: Number
+    Default: 7
+
 Resources:
   ResourceFunction:
     Type: AWS::Serverless::Function
@@ -19,6 +24,24 @@ Resources:
       Environment:
         Variables:
           LAMBDA_ARN: !GetAtt ResourceFunction.Arn
+
+  # Workaround https://github.com/aws/serverless-application-model/issues/257
+  # https://github.com/aws/serverless-application-model/pull/460
+  ResourceFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DependsOn: [ ResourceFunction ]
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${ResourceFunction}
+      RetentionInDays: !Ref RetentionInDays
+
+  # Workaround https://github.com/aws/serverless-application-model/issues/257
+  # https://github.com/aws/serverless-application-model/pull/460
+  MacroFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DependsOn: [ MacroFunction ]
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${MacroFunction}
+      RetentionInDays: !Ref RetentionInDays
 
   Macro:
     Type: AWS::CloudFormation::Macro
